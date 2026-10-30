@@ -1,18 +1,21 @@
-// Licensed under the Dartastic Pro Software License Agreement.
+// Licensed under the Apache License, Version 2.0
 // Copyright 2025-2026 Mindful Software LLC d/b/a Dartastic.io, All rights reserved.
 
-import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
+import 'package:dartastic_opentelemetry_api/dartastic_opentelemetry_api.dart';
 
 import 'otel_lancedb_suppression.dart';
 
 const _tracerName = 'dartastic_otel_libs_lancedb';
 const _systemValue = 'lancedb';
 
-Tracer _tracer() => OTel.tracerProvider().getTracer(_tracerName);
+APITracer _tracer() => OTelAPI.tracerProvider().getTracer(_tracerName);
 
 /// Pair returned from `tracedLancedbSearch` callback.
 class LancedbSearchResult<T> {
+  /// Creates a result.
   const LancedbSearchResult({required this.value, this.resultCount});
+
+  /// The value returned to the caller.
   final T value;
   final int? resultCount;
 }
@@ -40,20 +43,20 @@ Future<T> tracedLancedbSearch<T>({
   final span = _tracer().startSpan(
     'lancedb search $table',
     kind: SpanKind.client,
-    attributes: OTel.attributesFromMap(m),
+    attributes: OTelAPI.attributesFromMap(m),
   );
   try {
     final r = await invoke();
     if (r.resultCount != null) {
-      span.addAttributes(OTel.attributes([
-        OTel.attributeInt('vector_db.search.result_count', r.resultCount!),
+      span.addAttributes(OTelAPI.attributes([
+        OTelAPI.attributeInt('vector_db.search.result_count', r.resultCount!),
       ]));
     }
     return r.value;
   } catch (e, st) {
-    span.addAttributes(OTel.attributes([
-      OTel.attributeString(
-        ErrorResource.errorType.key,
+    span.addAttributes(OTelAPI.attributes([
+      OTelAPI.attributeString(
+        ErrorAttributes.errorType.key,
         e.runtimeType.toString(),
       ),
     ]));
@@ -86,14 +89,14 @@ Future<T> tracedLancedbWrite<T>({
   final span = _tracer().startSpan(
     'lancedb $operation $table',
     kind: SpanKind.client,
-    attributes: OTel.attributesFromMap(m),
+    attributes: OTelAPI.attributesFromMap(m),
   );
   try {
     return await invoke();
   } catch (e, st) {
-    span.addAttributes(OTel.attributes([
-      OTel.attributeString(
-        ErrorResource.errorType.key,
+    span.addAttributes(OTelAPI.attributes([
+      OTelAPI.attributeString(
+        ErrorAttributes.errorType.key,
         e.runtimeType.toString(),
       ),
     ]));
